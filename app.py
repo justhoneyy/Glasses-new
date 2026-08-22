@@ -120,6 +120,19 @@ def login_page():
     )
 
 
+@app.route("/shop")
+def shop_page():
+    """Dedicated category / filtered-listing page — e.g. /shop?gender=Men,
+    /shop?shape=Round, /shop?price_band=under-750. Products are fetched
+    client-side from /api/products so every combination of filters works
+    without adding a new route per category."""
+    return render_template(
+        "shop.html",
+        google_client_id=app.config["GOOGLE_CLIENT_ID"],
+        whatsapp_number=app.config["WHATSAPP_NUMBER"],
+    )
+
+
 @app.route("/admin")
 def admin_page():
     # Client cannot self-grant admin; page loads, but every API call is re-checked server-side.
@@ -232,6 +245,12 @@ def _apply_product_filters(query, args):
     tag = args.get("tag")
     if tag:
         query = query.filter(Product.tags.contains([tag]))
+
+    # multiple tags (comma-separated or repeated) = OR match, used by
+    # "View All" links from CMS sections that filter on more than one tag
+    tags = multi_get("tags")
+    if tags:
+        query = query.filter(or_(*[Product.tags.contains([t]) for t in tags]))
 
     price_band = args.get("price_band")
     if price_band in PRICE_BANDS:

@@ -12,8 +12,9 @@ project/
 └── frontend/
     ├── templates/
     │   ├── index.html         # Your original design + inlined CSS/JS, fully data-driven
-    │   ├── admin.html          # Admin dashboard (self-contained)
-    │   ├── login.html          # Google-only login (self-contained)
+    │   ├── shop.html            # Category / filtered listing page (Men, Women, by shape, by price, search…)
+    │   ├── admin.html            # Admin dashboard (self-contained)
+    │   ├── login.html            # Google-only login (self-contained)
     │   └── product.html        # Buy flow, with the same shared CSS/JS inlined
     └── static/
         └── uploads/              # Admin-uploaded images land here (served at /static/uploads/…)
@@ -106,3 +107,19 @@ fix: also set the `PYTHON_VERSION` environment variable to `3.12.7` directly on 
 service (Dashboard → Environment) — this is Render's officially recommended override and
 takes priority over file-based pinning.
 
+## 10. Category pages (`/shop`)
+Clicking "Men", "Women", "Kids", a frame shape, a style card, or a price band anywhere on
+the homepage now navigates to a dedicated listing page instead of filtering products inline
+on the homepage:
+```
+/shop?gender=Men
+/shop?shape=Round
+/shop?price_band=under-750
+/shop?style=Professional
+/shop?search=aviator
+```
+Filters combine (e.g. `/shop?gender=Men&shape=Round`) and the in-page filter chips let
+shoppers refine further without leaving the page. The homepage itself only shows curated
+CMS sections (New Arrivals, Best Sellers, etc.) as previews — full browsing by category
+happens on `/shop`. "View All" on a homepage section links to `/shop` pre-filtered to that
+section's own tags/gender/shape.
