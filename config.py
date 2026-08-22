@@ -6,12 +6,17 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 
     # --- Database ---
+    # Uses psycopg (v3) rather than psycopg2-binary — psycopg2-binary ships
+    # precompiled wheels that lag behind new Python releases (it broke on
+    # Python 3.14), while psycopg[binary] tracks new interpreters much faster.
+    # SQLAlchemy needs the "+psycopg" driver suffix to pick psycopg3 instead
+    # of defaulting to psycopg2.
     _raw_db_url = os.environ.get("DATABASE_URL", "")
     if _raw_db_url.startswith("postgres://"):
-        # Render / Heroku style URLs use the old "postgres://" scheme,
-        # SQLAlchemy 2.x requires "postgresql://"
-        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
-    SQLALCHEMY_DATABASE_URI = _raw_db_url or "postgresql://localhost/eyewear"
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif _raw_db_url.startswith("postgresql://"):
+        _raw_db_url = _raw_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    SQLALCHEMY_DATABASE_URI = _raw_db_url or "postgresql+psycopg://localhost/eyewear"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 

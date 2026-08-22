@@ -30,6 +30,7 @@ Flask has somewhere to save and serve admin-uploaded product/hero images.
 |---|---|---|
 | `DATABASE_URL` | Yes | — (Render provides this automatically) |
 | `SECRET_KEY` | Yes | — set a long random value |
+| `PYTHON_VERSION` | Recommended | see §9 — set to `3.12.7` in Render's dashboard |
 | `GOOGLE_CLIENT_ID` | No | provided default client ID |
 | `GOOGLE_CLIENT_SECRET` | No | not used by the ID-token flow, reserved for future use |
 | `ADMIN_EMAIL` | No | `smartmind2910@gmail.com` |
@@ -88,3 +89,20 @@ default in `config.py` / `GOOGLE_CLIENT_ID`.
 - First-boot table creation can race across multiple Gunicorn workers on a brand-new database;
   this is harmless (checks are idempotent) but you may see a duplicate-key log line once — it
   will not recur after the first successful boot.
+
+## 9. Pinning the Python version (important)
+Render has, at times, ignored `runtime.txt` and defaulted new services to its latest
+available Python (currently 3.14) — which breaks `psycopg2`-style binary wheels that haven't
+been rebuilt for a brand-new interpreter yet. This project defends against that two ways:
+1. A `.python-version` file at the repo root (Render's current, documented way to pin a
+   version) set to `3.12.7`.
+2. The Postgres driver itself: `requirements.txt` uses `psycopg[binary]` (psycopg **3**)
+   instead of `psycopg2-binary`, since psycopg 3 ships wheels for new Python releases much
+   faster and is less likely to break the next time Render bumps its default.
+
+If a deploy ever fails again with an `ImportError: ... undefined symbol` from a C extension,
+it almost always means the build ran on a newer Python than expected. Belt-and-suspenders
+fix: also set the `PYTHON_VERSION` environment variable to `3.12.7` directly on the Render
+service (Dashboard → Environment) — this is Render's officially recommended override and
+takes priority over file-based pinning.
+
