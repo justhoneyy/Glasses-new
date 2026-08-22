@@ -570,17 +570,6 @@
 </section>
 <!-- END: Shop by Price -->
 
-<!-- BEGIN: Live filter results (populated when searching / filtering) -->
-<section id="liveResults" class="py-4 px-4 io-reveal hidden">
-  <div class="flex items-center justify-between mb-4">
-    <h3 id="liveResultsTitle" class="text-xl font-bold text-[#0c1a4b]">Results</h3>
-    <button class="text-sm font-semibold text-blue-600 btn-press" onclick="clearLiveResults()">Clear</button>
-  </div>
-  <div id="liveResultsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
-  <p id="liveResultsEmpty" class="hidden text-center text-gray-500 py-10">No glasses found.</p>
-</section>
-<!-- END: Live filter results -->
-
 <!-- BEGIN: CMS-driven product sections (New Arrivals, Best Sellers, etc.) -->
 <div id="dynamicSections"></div>
 <!-- END: CMS-driven product sections -->
@@ -1138,6 +1127,7 @@
       </div>
     </div>`;
   }
+  window.__productCardHtml = productCardHtml;
 
   function escapeHtml(s) {
     return String(s || "").replace(/[&<>"']/g, (c) => ({
@@ -1148,6 +1138,18 @@
   // -------------------------------------------------------------------
   // Dynamic homepage sections (CMS)
   // -------------------------------------------------------------------
+  function sectionShopUrl(filterConfig) {
+    const fc = filterConfig || {};
+    const params = new URLSearchParams();
+    if (fc.tags && fc.tags.length) params.set("tags", fc.tags.join(","));
+    if (fc.gender && fc.gender.length) params.set("gender", fc.gender[0]);
+    if (fc.shape && fc.shape.length) params.set("shape", fc.shape[0]);
+    if (fc.style && fc.style.length) params.set("style", fc.style[0]);
+    if (fc.brand) params.set("brand", fc.brand);
+    const qs = params.toString();
+    return "/shop" + (qs ? "?" + qs : "");
+  }
+
   async function loadDynamicSections() {
     const container = document.getElementById("dynamicSections");
     if (!container) return;
@@ -1160,7 +1162,7 @@
               <h3 class="text-xl font-bold text-[#0c1a4b]">${escapeHtml(s.title)}</h3>
               ${s.subtitle ? `<p class="text-sm text-gray-500">${escapeHtml(s.subtitle)}</p>` : ""}
             </div>
-            ${s.button_text ? `<button class="text-sm font-semibold text-blue-600 btn-press" onclick="scrollToShop()">${escapeHtml(s.button_text)}</button>` : ""}
+            ${s.button_text ? `<a href="${sectionShopUrl(s.filter_config)}" class="text-sm font-semibold text-blue-600 btn-press">${escapeHtml(s.button_text)}</a>` : ""}
           </div>
           <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             ${s.products.length ? s.products.map(productCardHtml).join("") : `<p class="col-span-full text-center text-gray-400 py-6">No products in this section yet.</p>`}
@@ -1257,60 +1259,34 @@
   };
 
   // -------------------------------------------------------------------
-  // Live filtered results (gender / shape / style / price)
+  // Category navigation — every "shop by X" control on the homepage sends
+  // the person to a dedicated /shop listing page instead of filtering
+  // products inline here, so each category gets its own real page/URL.
   // -------------------------------------------------------------------
-  async function showLiveResults(title, params) {
-    const section = document.getElementById("liveResults");
-    const grid = document.getElementById("liveResultsGrid");
-    const empty = document.getElementById("liveResultsEmpty");
-    const heading = document.getElementById("liveResultsTitle");
-    if (!section) return;
-    heading.textContent = title;
-    section.classList.remove("hidden");
-    grid.innerHTML = `<div class="col-span-full"><div class="spinner"></div></div>`;
-    empty.classList.add("hidden");
-    try {
-      const qs = new URLSearchParams(params).toString();
-      const data = await api(`/api/products?${qs}`);
-      if (data.products.length === 0) {
-        grid.innerHTML = "";
-        empty.classList.remove("hidden");
-      } else {
-        grid.innerHTML = data.products.map(productCardHtml).join("");
-      }
-    } catch (e) {
-      grid.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">Something went wrong loading results.</p>`;
-    }
-    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  function goToShop(params) {
+    const qs = new URLSearchParams(params || {}).toString();
+    window.location.href = "/shop" + (qs ? "?" + qs : "");
   }
 
-  window.clearLiveResults = function () {
-    document.getElementById("liveResults").classList.add("hidden");
-  };
-
-  window.selectCategory = function (name, el) {
-    document.querySelectorAll("#shopping-for button").forEach((b) => b.querySelector("div").classList.remove("ring-2", "ring-blue-600"));
-    if (el) el.querySelector("div").classList.add("ring-2", "ring-blue-600");
-    showLiveResults(`Eyewear for ${name}`, { gender: name });
+  window.selectCategory = function (name) {
+    goToShop({ gender: name });
   };
 
   window.filterByPrice = function (band) {
-    const labels = { "under-750": "Under ₹750", "750-1500": "₹750 – ₹1,500", "1500-3000": "₹1,500 – ₹3,000", "3000-plus": "₹3,000+" };
-    showLiveResults(labels[band] || "Results", { price_band: band });
+    goToShop({ price_band: band });
   };
 
   window.filterByShape = function (shape) {
-    showLiveResults(`${shape} Frames`, { shape });
+    goToShop({ shape });
   };
 
   window.filterByStyle = function (style) {
-    showLiveResults(`${style} Looks`, { style });
+    goToShop({ style });
   };
 
   window.scrollToShop = function (gender) {
-    if (gender) { window.selectCategory(gender); return; }
-    const target = document.getElementById("dynamicSections") || document.getElementById("shop-by-price");
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (gender) { goToShop({ gender }); return; }
+    goToShop();
   };
 
   // -------------------------------------------------------------------

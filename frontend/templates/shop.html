@@ -3,21 +3,24 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>{{ product.name }} | Shop Eyeglasses</title>
+<title>Shop Eyewear | Shop Eyeglasses</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; }
   body { font-family: 'Poppins', sans-serif; background: #f8f9fa; color: #1a1a2e; }
   .app-shell { max-width: 28rem; margin: 0 auto; width: 100%; }
-  @media (min-width: 1024px) { .app-shell { max-width: 720px; } }
-  .step { display: none; }
-  .step.active { display: block; }
-  .btn-primary { background: #0c1a4b; color: #fff; font-weight: 700; border-radius: 10px; padding: 12px 0; width: 100%; transition: background-color .2s; }
-  .btn-primary:hover { background: #132363; }
-  .btn-primary:disabled { background: #d1d5db; cursor: not-allowed; }
-  .btn-secondary { background: #fff; color: #0c1a4b; font-weight: 700; border: 1px solid #0c1a4b; border-radius: 10px; padding: 12px 0; width: 100%; }
+  @media (min-width: 1024px) { .app-shell { max-width: 960px; } }
+  .icon-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 9999px; }
+  .icon-btn:hover { background: #f4f5f7; }
+  .btn-press:active { transform: scale(0.96); }
+  .chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -ms-overflow-style: none; scrollbar-width: none; }
+  .chip-row::-webkit-scrollbar { display: none; }
+  .filter-chip { flex-shrink: 0; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 9999px; border: 1px solid #e5e7eb; color: #4b5563; background: #fff; white-space: nowrap; transition: all .15s ease; }
+  .filter-chip.active { background: #0c1a4b; color: #fff; border-color: #0c1a4b; }
+  .filter-group-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #9ca3af; letter-spacing: .04em; margin-bottom: 6px; }
 
 /* ---- merged from static/css/style.css ---- */
 /* Cart drawer (mirrors #mobileMenu behavior) */
@@ -70,169 +73,98 @@
   .pc-card, .pc-card:hover, #cartDrawer, #cartOverlay { transition: none !important; transform: none !important; }
 }
 
+
 </style>
 </head>
 <body class="antialiased">
 
+<!-- Cart drawer -->
+<div id="cartOverlay" class="fixed inset-0 bg-black/50 z-[80]" onclick="closeCart()"></div>
+<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-[88%] max-w-sm bg-white z-[90] shadow-2xl overflow-y-auto">
+  <div class="flex items-center justify-between px-5 py-4 border-b">
+    <span class="font-bold text-lg text-[#0c1a4b]">Your Bag</span>
+    <button class="icon-btn text-gray-600 hover:text-black btn-press" onclick="closeCart()" aria-label="Close cart"><i class="fa-solid fa-xmark text-xl"></i></button>
+  </div>
+  <div id="cartItemsList" class="p-4 flex flex-col gap-3"></div>
+  <div id="cartFooter" class="p-4 border-t hidden">
+    <div class="flex justify-between font-bold text-[#0c1a4b] mb-3">
+      <span>Total</span><span id="cartTotal">₹0</span>
+    </div>
+    <a href="#" id="cartCheckoutBtn" class="btn-press block text-center w-full bg-[#0c1a4b] text-white font-bold py-3 rounded-lg hover:bg-[#132363] transition-colors">Checkout</a>
+  </div>
+</aside>
+
+<!-- Wishlist drawer -->
+<div id="wishlistOverlay" class="fixed inset-0 bg-black/50 z-[80]" onclick="closeWishlistView()"></div>
+<aside id="wishlistDrawer" class="fixed top-0 right-0 h-full w-[88%] max-w-sm bg-white z-[90] shadow-2xl overflow-y-auto">
+  <div class="flex items-center justify-between px-5 py-4 border-b">
+    <span class="font-bold text-lg text-[#0c1a4b]">Your Wishlist</span>
+    <button class="icon-btn text-gray-600 hover:text-black btn-press" onclick="closeWishlistView()" aria-label="Close wishlist"><i class="fa-solid fa-xmark text-xl"></i></button>
+  </div>
+  <div id="wishlistItemsList" class="p-4 grid grid-cols-2 gap-3"></div>
+</aside>
+
+<!-- Search results overlay -->
+<div id="searchResultsOverlay" class="fixed inset-0 bg-black/50 z-[80] hidden" onclick="closeSearchResults(event)">
+  <div class="bg-white mt-16 mx-auto app-shell rounded-t-2xl lg:rounded-2xl max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-5 py-4 border-b sticky top-0 bg-white">
+      <span class="font-bold text-lg text-[#0c1a4b]">Search Results</span>
+      <button class="icon-btn text-gray-600 hover:text-black btn-press" onclick="closeSearchResults()"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div id="searchResultsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4"></div>
+  </div>
+</div>
+
 <header class="sticky top-0 z-30 bg-white shadow-sm border-b">
   <div class="app-shell px-4 py-3 flex items-center gap-3">
-    <a href="/" class="text-gray-700 hover:text-black"><i class="fa-solid fa-arrow-left text-xl"></i></a>
-    <h1 class="text-base font-bold truncate">Product Details</h1>
+    <a href="/" class="icon-btn text-gray-700 hover:text-black flex-shrink-0"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+    <h1 id="pageTitle" class="text-base font-bold truncate flex-1">Shop Eyewear</h1>
+    <div class="flex items-center gap-1 flex-shrink-0">
+      <button class="icon-btn text-gray-700 hover:text-black btn-press" onclick="openShopSearch()" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <button id="wishlistBtn" class="icon-btn text-gray-700 hover:text-black btn-press relative" aria-label="Wishlist" onclick="openWishlistView()">
+        <i class="fa-regular fa-heart"></i>
+        <span id="wishlistCount" class="hidden absolute top-1 right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 items-center justify-center">0</span>
+      </button>
+      <button id="bagBtn" class="icon-btn text-gray-700 hover:text-black btn-press relative" aria-label="Shopping bag" onclick="openCart()">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span id="bagCount" class="hidden absolute top-1 right-1 bg-blue-600 text-white text-[9px] font-bold rounded-full w-4 h-4 items-center justify-center">0</span>
+      </button>
+      <a href="/login" id="desktopAuthArea" class="hidden lg:inline-flex btn-press text-xs font-bold bg-[#0c1a4b] text-white px-3 py-2 rounded-lg hover:bg-[#132363] transition-colors ml-1">Login</a>
+    </div>
+  </div>
+  <div id="shopSearchBar" class="app-shell px-4 pb-3 hidden">
+    <div class="relative">
+      <input id="searchInput" type="text" placeholder="Search glasses, brands, SKU..." class="w-full bg-gray-100 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0c1a4b]" onkeydown="if(event.key==='Enter') window.runSearch()"/>
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+    </div>
   </div>
 </header>
 
 <main class="app-shell px-4 pb-16 pt-4">
-
-  <!-- STEP 1: Product -->
-  <section id="step-product" class="step active">
-    <div class="rounded-2xl overflow-hidden bg-white shadow-sm border">
-      <div class="aspect-square bg-gray-100">
-        <img id="mainImage" src="{{ product.image or 'https://placehold.co/600x600?text=Eyewear' }}" class="w-full h-full object-cover" alt="{{ product.name }}"/>
-      </div>
+  <div id="filterBar" class="mb-4 space-y-3">
+    <div>
+      <p class="filter-group-label">Shopping for</p>
+      <div class="chip-row" id="genderChips"></div>
     </div>
-
-    <div class="mt-4">
-      <p class="text-xs font-bold text-gray-400 uppercase">{{ product.brand }}</p>
-      <div class="flex items-start justify-between gap-3">
-        <h2 class="text-xl font-bold text-[#0c1a4b] mt-1">{{ product.name }}</h2>
-        <button id="wishlistToggleBtn" class="w-11 h-11 rounded-full border flex items-center justify-center flex-shrink-0" onclick="window.toggleWishlistProduct({{ product.id }}, this)">
-          <i class="fa-regular fa-heart"></i>
-        </button>
-      </div>
-
-      <div class="flex items-baseline gap-2 mt-2">
-        <span class="text-2xl font-bold text-[#0c1a4b]" id="priceMain">₹{{ '%.0f'|format(product.sale_price or product.price) }}</span>
-        {% if product.sale_price %}
-        <span class="text-sm text-gray-400 line-through">₹{{ '%.0f'|format(product.price) }}</span>
-        <span class="text-sm font-bold text-green-600">{{ ((1 - (product.sale_price / product.price)) * 100) | round | int }}% off</span>
-        {% endif %}
-      </div>
-
-      <p class="text-sm text-gray-600 mt-3 leading-relaxed">{{ product.description or "No description provided." }}</p>
-
-      <div class="flex flex-wrap gap-2 mt-3">
-        {% for g in (product.gender or []) %}<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ g }}</span>{% endfor %}
-        {% for s in (product.shape or []) %}<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ s }}</span>{% endfor %}
-      </div>
-
-      <p class="text-sm mt-4 font-semibold {{ 'text-green-600' if product.stock > 0 else 'text-red-500' }}">
-        {% if product.stock > 0 %}<i class="fa-solid fa-check"></i> In stock ({{ product.stock }} available){% else %}<i class="fa-solid fa-xmark"></i> Out of stock{% endif %}
-      </p>
-
-      <div class="flex items-center gap-2 mt-4">
-        <span class="text-sm font-semibold">Qty</span>
-        <button class="cart-qty-btn" onclick="changeQty(-1)">−</button>
-        <span id="qtyDisplay" class="w-6 text-center">1</span>
-        <button class="cart-qty-btn" onclick="changeQty(1)">+</button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-6">
-        <button class="btn-secondary" onclick="window.addToCart({{ product.id }})" {{ 'disabled' if product.stock == 0 else '' }}>Add to Bag</button>
-        <button class="btn-primary" id="buyNowBtn" onclick="startBuyFlow()" {{ 'disabled' if product.stock == 0 else '' }}>Buy Now</button>
-      </div>
+    <div>
+      <p class="filter-group-label">Type</p>
+      <div class="chip-row" id="typeChips"></div>
     </div>
-  </section>
-
-  <!-- STEP 2: Eye checkup question -->
-  <section id="step-checkup" class="step">
-    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('product')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
-    <h2 class="text-xl font-bold text-[#0c1a4b] mb-1">Have you had your eye checkup?</h2>
-    <p class="text-sm text-gray-500 mb-6">We need your prescription to prepare the right lenses.</p>
-    <div class="grid grid-cols-2 gap-3">
-      <button class="btn-primary" onclick="checkupAnswer(true)">Yes</button>
-      <button class="btn-secondary" onclick="checkupAnswer(false)">No</button>
+    <div>
+      <p class="filter-group-label">Shape</p>
+      <div class="chip-row" id="shapeChips"></div>
     </div>
-
-    <div id="noCheckupPanel" class="hidden mt-6 bg-blue-50 border border-blue-100 rounded-xl p-5 text-center">
-      <i class="fa-solid fa-eye text-3xl text-[#0c1a4b] mb-3"></i>
-      <h3 class="font-bold text-[#0c1a4b] mb-1">Get a FREE eye checkup</h3>
-      <p class="text-sm text-gray-600 mb-4">Contact our store on WhatsApp to book a free eye checkup before you order.</p>
-      <button class="btn-primary" onclick="getFreeCheckup()">Get Free Eye Checkup</button>
-      <p class="text-xs text-gray-400 mt-3">You'll be taken to WhatsApp — just press Send.</p>
+    <div>
+      <p class="filter-group-label">Price</p>
+      <div class="chip-row" id="priceChips"></div>
     </div>
-  </section>
+    <button id="clearFiltersBtn" class="hidden text-xs font-semibold text-blue-600 btn-press" onclick="clearAllFilters()"><i class="fa-solid fa-xmark mr-1"></i>Clear all filters</button>
+  </div>
 
-  <!-- STEP 3: Prescription -->
-  <section id="step-prescription" class="step">
-    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('checkup')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
-    <h2 class="text-xl font-bold text-[#0c1a4b] mb-1">Enter your prescription</h2>
-    <p class="text-sm text-gray-500 mb-4">From your latest eye checkup report.</p>
-
-    <label class="flex items-center gap-2 text-sm mb-4">
-      <input type="checkbox" id="dontKnowPower" onchange="toggleDontKnow()"/>
-      I don't know my exact power
-    </label>
-
-    <div id="rxFields">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <p class="font-semibold text-sm text-[#0c1a4b] mb-2">Right Eye (OD)</p>
-          <div class="space-y-2">
-            <input class="rx-input" id="r_sph" placeholder="SPH (e.g. -2.00)"/>
-            <input class="rx-input" id="r_cyl" placeholder="CYL (e.g. -0.50)"/>
-            <input class="rx-input" id="r_axis" placeholder="AXIS (0-180)"/>
-          </div>
-        </div>
-        <div>
-          <p class="font-semibold text-sm text-[#0c1a4b] mb-2">Left Eye (OS)</p>
-          <div class="space-y-2">
-            <input class="rx-input" id="l_sph" placeholder="SPH (e.g. -2.00)"/>
-            <input class="rx-input" id="l_cyl" placeholder="CYL (e.g. -0.50)"/>
-            <input class="rx-input" id="l_axis" placeholder="AXIS (0-180)"/>
-          </div>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-4 mt-4">
-        <input class="rx-input" id="pd_val" placeholder="PD (optional)"/>
-        <input class="rx-input" id="add_val" placeholder="ADD (optional)"/>
-      </div>
-      <textarea class="rx-input mt-4" id="rx_notes" rows="2" placeholder="Additional notes (optional)"></textarea>
-    </div>
-
-    <div id="dontKnowPanel" class="hidden mt-4 bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-gray-600">
-      No problem — we'll flag your order so our team can contact you on WhatsApp to collect your prescription safely. We won't guess your power for you.
-    </div>
-
-    <p id="rxError" class="text-sm text-red-500 mt-3 hidden"></p>
-    <button class="btn-primary mt-6" onclick="submitPrescription()">Continue to Order Summary</button>
-  </section>
-
-  <!-- STEP 4: Order Summary -->
-  <section id="step-summary" class="step">
-    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('prescription')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
-    <h2 class="text-xl font-bold text-[#0c1a4b] mb-4">Order Summary</h2>
-
-    <div class="bg-white border rounded-xl p-4 flex gap-3 items-center mb-4">
-      <img src="{{ product.image or 'https://placehold.co/100' }}" class="w-16 h-16 rounded-lg object-cover" alt=""/>
-      <div>
-        <p class="font-semibold text-[#0c1a4b]">{{ product.name }}</p>
-        <p class="text-xs text-gray-500">SKU: {{ product.sku }}</p>
-        <p class="text-sm font-bold text-[#0c1a4b] mt-1" id="summaryPrice"></p>
-      </div>
-    </div>
-
-    <div class="bg-white border rounded-xl p-4 mb-4" id="summaryCustomer">
-      <p class="text-xs font-bold text-gray-400 uppercase mb-1">Customer</p>
-      <p class="text-sm" id="summaryCustomerText">Not signed in</p>
-    </div>
-
-    <div class="bg-white border rounded-xl p-4 mb-4" id="summaryRx"></div>
-
-    <div class="bg-white border rounded-xl p-4 mb-4 flex justify-between items-center">
-      <span class="text-sm font-semibold">Quantity</span>
-      <span id="summaryQty" class="text-sm font-bold"></span>
-    </div>
-
-    <div class="flex justify-between items-center text-lg font-bold text-[#0c1a4b] mb-6">
-      <span>Total</span><span id="summaryTotal"></span>
-    </div>
-
-    <p id="orderError" class="text-sm text-red-500 mb-3 hidden"></p>
-    <button class="btn-primary" id="sendOrderBtn" onclick="sendOrder()">
-      <i class="fa-brands fa-whatsapp mr-1"></i> Send Order on WhatsApp
-    </button>
-    <p class="text-xs text-gray-400 mt-3 text-center">We'll open WhatsApp with your order pre-filled — just press Send. We don't send it automatically.</p>
-  </section>
+  <p id="resultCount" class="text-xs text-gray-500 mb-3"></p>
+  <div id="shopGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+  <div id="shopSpinner" class="hidden"><div class="spinner"></div></div>
+  <p id="shopEmpty" class="hidden text-center text-gray-500 py-16">No glasses found for these filters.<br/><button class="text-blue-600 font-semibold mt-2 btn-press" onclick="clearAllFilters()">Clear filters</button></p>
 </main>
 
 <script>window.STORE_CONFIG = { googleClientId: "{{ google_client_id }}", whatsappNumber: "{{ whatsapp_number }}" };</script>
@@ -775,188 +707,137 @@
 
 </script>
 <script>
-  const PRODUCT_ID = {{ product.id }};
-  const PRODUCT_PRICE = {{ product.sale_price or product.price }};
-  let qty = 1;
+  // ---------------------------------------------------------------------
+  // Category page filter logic (gender / type / shape / price via URL params)
+  // ---------------------------------------------------------------------
+  const GENDER_OPTS = ["Men", "Women", "Kids", "Teenagers"];
+  const TYPE_OPTS = ["Eyeglasses", "Sunglasses", "Blue-light glasses", "Reading glasses", "Computer glasses", "Prescription glasses"];
+  const SHAPE_OPTS = ["Round", "Square", "Rectangle", "Oval", "Cat Eye", "Geometric", "Aviator"];
+  const PRICE_OPTS = [
+    { value: "under-750", label: "Under ₹750" },
+    { value: "750-1500", label: "₹750 – ₹1,500" },
+    { value: "1500-3000", label: "₹1,500 – ₹3,000" },
+    { value: "3000-plus", label: "₹3,000+" },
+  ];
 
-  document.addEventListener('wishlist:ready', () => {
-    const btn = document.getElementById('wishlistToggleBtn');
-    const icon = btn.querySelector('i');
-    const active = window.isWishlisted(PRODUCT_ID);
-    btn.classList.toggle('active', active);
-    icon.className = `fa-${active ? 'solid' : 'regular'} fa-heart`;
-  });
-  let hasCheckup = null;
-  let prescriptionData = { has_checkup: false };
-
-  function goToStep(name) {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step-' + name).classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  function currentParams() {
+    return new URLSearchParams(window.location.search);
   }
 
-  function changeQty(delta) {
-    qty = Math.max(1, qty + delta);
-    document.getElementById('qtyDisplay').textContent = qty;
-  }
-
-  function startBuyFlow() {
-    if (!window.__currentUserLoaded) {
-      // app.js loads the user async; give it a brief moment then re-check
+  function setFilter(key, value) {
+    const params = currentParams();
+    const active = params.get(key) === value;
+    if (active) {
+      params.delete(key);
+    } else {
+      params.set(key, value);
     }
-    fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => r.json()).then(data => {
-      if (!data.user) {
-        sessionStorage.setItem('post_login_redirect', window.location.pathname);
-        window.location.href = '/login';
+    window.location.href = "/shop" + (params.toString() ? "?" + params.toString() : "");
+  }
+
+  function clearAllFilters() {
+    window.location.href = "/shop";
+  }
+
+  function openShopSearch() {
+    const bar = document.getElementById("shopSearchBar");
+    bar.classList.toggle("hidden");
+    if (!bar.classList.contains("hidden")) document.getElementById("searchInput").focus();
+  }
+
+  function renderChips(containerId, options, paramKey, valueOf, labelOf) {
+    const el = document.getElementById(containerId);
+    const params = currentParams();
+    const activeVal = params.get(paramKey);
+    el.innerHTML = options.map((o) => {
+      const val = valueOf(o), label = labelOf(o);
+      const isActive = activeVal === val;
+      return `<button class="filter-chip ${isActive ? "active" : ""}" onclick="setFilter('${paramKey}', '${val}')">${label}</button>`;
+    }).join("");
+  }
+
+  function buildTitle(params) {
+    const search = params.get("search");
+    if (search) return `Search: "${search}"`;
+    const gender = params.get("gender");
+    const shape = params.get("shape");
+    const type = params.get("type");
+    const priceBand = params.get("price_band");
+    const parts = [];
+    if (gender) parts.push(`${gender}'s`);
+    if (shape) parts.push(shape);
+    if (type) parts.push(type);
+    else if (parts.length === 0) parts.push("All Eyewear");
+    let title = parts.join(" ") || "Shop Eyewear";
+    if (priceBand) {
+      const band = PRICE_OPTS.find((p) => p.value === priceBand);
+      if (band) title += ` — ${band.label}`;
+    }
+    return title;
+  }
+
+  async function loadShopGrid() {
+    const params = currentParams();
+    document.getElementById("pageTitle").textContent = buildTitle(params);
+    document.title = buildTitle(params) + " | Shop Eyeglasses";
+
+    const hasFilters = ["gender", "shape", "type", "price_band", "search", "tag", "tags", "brand"].some((k) => params.get(k));
+    document.getElementById("clearFiltersBtn").classList.toggle("hidden", !hasFilters);
+
+    renderChips("genderChips", ["All", ...GENDER_OPTS], "gender", (o) => (o === "All" ? "" : o), (o) => o);
+    renderChips("typeChips", ["All", ...TYPE_OPTS], "type", (o) => (o === "All" ? "" : o), (o) => o);
+    renderChips("shapeChips", ["All", ...SHAPE_OPTS], "shape", (o) => (o === "All" ? "" : o), (o) => o);
+    renderChips("priceChips", [{ value: "", label: "All" }, ...PRICE_OPTS], "price_band", (o) => o.value, (o) => o.label);
+    // "All" chips clear that dimension entirely rather than toggling an empty value
+    document.querySelectorAll('#genderChips .filter-chip, #typeChips .filter-chip, #shapeChips .filter-chip').forEach((btn, i, arr) => {});
+
+    const grid = document.getElementById("shopGrid");
+    const spinner = document.getElementById("shopSpinner");
+    const empty = document.getElementById("shopEmpty");
+    const countEl = document.getElementById("resultCount");
+
+    grid.innerHTML = "";
+    empty.classList.add("hidden");
+    spinner.classList.remove("hidden");
+    countEl.textContent = "";
+
+    try {
+      const res = await fetch("/api/products?" + params.toString(), { credentials: "same-origin" });
+      const data = await res.json();
+      spinner.classList.add("hidden");
+      if (!data.products || data.products.length === 0) {
+        empty.classList.remove("hidden");
         return;
       }
-      goToStep('checkup');
-    });
-  }
-
-  function checkupAnswer(yes) {
-    hasCheckup = yes;
-    document.getElementById('noCheckupPanel').classList.toggle('hidden', !!yes ? true : false);
-    if (yes) {
-      goToStep('prescription');
-    } else {
-      document.getElementById('noCheckupPanel').classList.remove('hidden');
-    }
-  }
-
-  async function getFreeCheckup() {
-    try {
-      const res = await fetch('/api/whatsapp/checkup-link');
-      const data = await res.json();
-      window.open(data.whatsapp_url, '_blank');
+      countEl.textContent = `${data.count} glasses found`;
+      grid.innerHTML = data.products.map(window.__productCardHtml).join("");
     } catch (e) {
-      alert('Could not open WhatsApp right now, please try again.');
+      spinner.classList.add("hidden");
+      countEl.textContent = "";
+      grid.innerHTML = `<p class="col-span-full text-center text-gray-500 py-16">Something went wrong loading products.</p>`;
     }
   }
 
-  function toggleDontKnow() {
-    const dontKnow = document.getElementById('dontKnowPower').checked;
-    document.getElementById('rxFields').classList.toggle('hidden', dontKnow);
-    document.getElementById('dontKnowPanel').classList.toggle('hidden', !dontKnow);
-  }
-
-  function validNum(val, min, max) {
-    if (val === '' || val === null) return true;
-    const n = parseFloat(val);
-    return !isNaN(n) && n >= min && n <= max;
-  }
-
-  function submitPrescription() {
-    const errEl = document.getElementById('rxError');
-    errEl.classList.add('hidden');
-    const dontKnow = document.getElementById('dontKnowPower').checked;
-
-    if (dontKnow) {
-      prescriptionData = { has_checkup: true, right: {}, left: {}, notes: "Customer does not know exact power — please contact for prescription." };
-      goToStep('summary');
-      renderSummary();
-      return;
+  // Prefill the search box if arriving via /shop?search=...
+  window.addEventListener("DOMContentLoaded", () => {
+    const params = currentParams();
+    const search = params.get("search");
+    if (search) {
+      document.getElementById("searchInput").value = search;
+      document.getElementById("shopSearchBar").classList.remove("hidden");
     }
+    loadShopGrid();
+  });
 
-    const r_sph = document.getElementById('r_sph').value.trim();
-    const r_cyl = document.getElementById('r_cyl').value.trim();
-    const r_axis = document.getElementById('r_axis').value.trim();
-    const l_sph = document.getElementById('l_sph').value.trim();
-    const l_cyl = document.getElementById('l_cyl').value.trim();
-    const l_axis = document.getElementById('l_axis').value.trim();
-    const pd = document.getElementById('pd_val').value.trim();
-    const add = document.getElementById('add_val').value.trim();
-    const notes = document.getElementById('rx_notes').value.trim();
-
-    if (![r_sph, l_sph].every(v => validNum(v, -20, 20)) || ![r_cyl, l_cyl].every(v => validNum(v, -20, 20))) {
-      errEl.textContent = 'SPH and CYL must be numbers between -20 and 20.';
-      errEl.classList.remove('hidden');
-      return;
-    }
-    if (![r_axis, l_axis].every(v => validNum(v, 0, 180))) {
-      errEl.textContent = 'AXIS must be a number between 0 and 180.';
-      errEl.classList.remove('hidden');
-      return;
-    }
-    if (!r_sph && !l_sph) {
-      errEl.textContent = 'Please enter at least the SPH values, or check "I don\'t know my exact power".';
-      errEl.classList.remove('hidden');
-      return;
-    }
-
-    prescriptionData = {
-      has_checkup: true,
-      right: { sph: r_sph, cyl: r_cyl, axis: r_axis },
-      left: { sph: l_sph, cyl: l_cyl, axis: l_axis },
-    };
-    if (pd) prescriptionData.pd = pd;
-    if (add) prescriptionData.add = add;
-    if (notes) prescriptionData.notes = notes;
-
-    goToStep('summary');
-    renderSummary();
-  }
-
-  async function renderSummary() {
-    document.getElementById('summaryPrice').textContent = '₹' + PRODUCT_PRICE.toFixed(0);
-    document.getElementById('summaryQty').textContent = qty;
-    document.getElementById('summaryTotal').textContent = '₹' + (PRODUCT_PRICE * qty).toFixed(0);
-
-    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-    const data = await res.json();
-    if (data.user) {
-      document.getElementById('summaryCustomerText').innerHTML =
-        `<span class="font-semibold">${data.user.name || ''}</span><br/><span class="text-gray-500">${data.user.email}</span>`;
-    }
-
-    const rxBox = document.getElementById('summaryRx');
-    if (!prescriptionData.has_checkup) {
-      rxBox.innerHTML = `<p class="text-xs font-bold text-gray-400 uppercase mb-1">Prescription</p><p class="text-sm text-gray-500">No prescription provided.</p>`;
-    } else if (prescriptionData.notes && !prescriptionData.right.sph) {
-      rxBox.innerHTML = `<p class="text-xs font-bold text-gray-400 uppercase mb-1">Prescription</p><p class="text-sm text-gray-500">${prescriptionData.notes}</p>`;
-    } else {
-      rxBox.innerHTML = `
-        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Prescription</p>
-        <div class="grid grid-cols-2 gap-3 text-sm">
-          <div><p class="font-semibold mb-1">Right Eye</p>
-            <p>SPH: ${prescriptionData.right.sph || '-'}</p>
-            <p>CYL: ${prescriptionData.right.cyl || '-'}</p>
-            <p>AXIS: ${prescriptionData.right.axis || '-'}</p>
-          </div>
-          <div><p class="font-semibold mb-1">Left Eye</p>
-            <p>SPH: ${prescriptionData.left.sph || '-'}</p>
-            <p>CYL: ${prescriptionData.left.cyl || '-'}</p>
-            <p>AXIS: ${prescriptionData.left.axis || '-'}</p>
-          </div>
-        </div>
-        ${prescriptionData.pd ? `<p class="text-sm mt-2">PD: ${prescriptionData.pd}</p>` : ''}`;
-    }
-  }
-
-  async function sendOrder() {
-    const btn = document.getElementById('sendOrderBtn');
-    const errEl = document.getElementById('orderError');
-    errEl.classList.add('hidden');
-    btn.disabled = true;
-    btn.textContent = 'Placing order...';
-    try {
-      const res = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ product_id: PRODUCT_ID, quantity: qty, prescription: prescriptionData }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not place order');
-      window.location.href = data.whatsapp_url;
-    } catch (e) {
-      errEl.textContent = e.message;
-      errEl.classList.remove('hidden');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-brands fa-whatsapp mr-1"></i> Send Order on WhatsApp';
-    }
-  }
+  // Override runSearch (defined in app.js) to navigate this page's own
+  // results grid instead of opening the overlay, since we're already on
+  // a listing page.
+  window.runSearch = function () {
+    const val = (document.getElementById("searchInput").value || "").trim();
+    const params = currentParams();
+    if (val) params.set("search", val); else params.delete("search");
+    window.location.href = "/shop" + (params.toString() ? "?" + params.toString() : "");
+  };
 </script>
 </body>
 </html>
