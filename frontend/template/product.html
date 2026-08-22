@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{{ product.name }} | Shop Eyeglasses</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; }
+  body { font-family: 'Poppins', sans-serif; background: #f8f9fa; color: #1a1a2e; }
+  .app-shell { max-width: 28rem; margin: 0 auto; width: 100%; }
+  @media (min-width: 1024px) { .app-shell { max-width: 720px; } }
+  .step { display: none; }
+  .step.active { display: block; }
+  .btn-primary { background: #0c1a4b; color: #fff; font-weight: 700; border-radius: 10px; padding: 12px 0; width: 100%; transition: background-color .2s; }
+  .btn-primary:hover { background: #132363; }
+  .btn-primary:disabled { background: #d1d5db; cursor: not-allowed; }
+  .btn-secondary { background: #fff; color: #0c1a4b; font-weight: 700; border: 1px solid #0c1a4b; border-radius: 10px; padding: 12px 0; width: 100%; }
+
+/* ---- merged from static/css/style.css ---- */
+/* Cart drawer (mirrors #mobileMenu behavior) */
+#cartDrawer { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+#cartDrawer.open { transform: translateX(0); }
+#cartOverlay { opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+#cartOverlay.open { opacity: 1; pointer-events: auto; }
+
+#wishlistDrawer { transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+#wishlistDrawer.open { transform: translateX(0); }
+#wishlistOverlay { opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+#wishlistOverlay.open { opacity: 1; pointer-events: auto; }
+
+/* Search results overlay */
+#searchResultsOverlay.open { display: block; }
+
+/* Product card (used by dynamic sections, live results, search results) */
+.pc-card { display: flex; flex-direction: column; background: #fff; border-radius: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.06); border: 1px solid #f0f1f3; overflow: hidden; transition: box-shadow .25s ease, transform .25s ease; }
+.pc-card:hover { box-shadow: 0 8px 24px rgba(12,26,75,0.12); transform: translateY(-2px); }
+.pc-image-wrap { position: relative; aspect-ratio: 1 / 1; background: #f4f5f7; overflow: hidden; }
+.pc-image-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.pc-wishlist-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 9999px; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+.pc-wishlist-btn.active i { color: #ef4444; }
+.pc-discount-badge { position: absolute; top: 8px; left: 8px; background: #0c1a4b; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; }
+.pc-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.pc-brand { font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.pc-name { font-size: 13px; font-weight: 600; color: #0c1a4b; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc-price-row { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; }
+.pc-price { font-weight: 700; color: #0c1a4b; font-size: 14px; }
+.pc-price-strike { font-size: 12px; color: #9ca3af; text-decoration: line-through; }
+.pc-stock-out { font-size: 11px; color: #dc2626; font-weight: 600; }
+.pc-add-btn { margin-top: 6px; width: 100%; background: #0c1a4b; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 0; border-radius: 8px; transition: background-color .2s ease; }
+.pc-add-btn:hover { background: #132363; }
+.pc-add-btn:disabled { background: #d1d5db; cursor: not-allowed; }
+
+/* Cart line item */
+.cart-line { display: flex; gap: 10px; align-items: center; border: 1px solid #f0f1f3; border-radius: 12px; padding: 8px; }
+.cart-line img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background: #f4f5f7; flex-shrink: 0; }
+.cart-qty-btn { width: 26px; height: 26px; border-radius: 9999px; border: 1px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+/* Prescription form */
+.rx-input { border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 100%; }
+.rx-input:focus { outline: 2px solid #2563eb; outline-offset: 1px; border-color: transparent; }
+
+/* Simple section spinner */
+.spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #0c1a4b; border-radius: 9999px; animation: spin .7s linear infinite; margin: 24px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-card, .pc-card:hover, #cartDrawer, #cartOverlay { transition: none !important; transform: none !important; }
+}
+
+</style>
+</head>
+<body class="antialiased">
+
+<header class="sticky top-0 z-30 bg-white shadow-sm border-b">
+  <div class="app-shell px-4 py-3 flex items-center gap-3">
+    <a href="/" class="text-gray-700 hover:text-black"><i class="fa-solid fa-arrow-left text-xl"></i></a>
+    <h1 class="text-base font-bold truncate">Product Details</h1>
+  </div>
+</header>
+
+<main class="app-shell px-4 pb-16 pt-4">
+
+  <!-- STEP 1: Product -->
+  <section id="step-product" class="step active">
+    <div class="rounded-2xl overflow-hidden bg-white shadow-sm border">
+      <div class="aspect-square bg-gray-100">
+        <img id="mainImage" src="{{ product.image or 'https://placehold.co/600x600?text=Eyewear' }}" class="w-full h-full object-cover" alt="{{ product.name }}"/>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <p class="text-xs font-bold text-gray-400 uppercase">{{ product.brand }}</p>
+      <div class="flex items-start justify-between gap-3">
+        <h2 class="text-xl font-bold text-[#0c1a4b] mt-1">{{ product.name }}</h2>
+        <button id="wishlistToggleBtn" class="w-11 h-11 rounded-full border flex items-center justify-center flex-shrink-0" onclick="window.toggleWishlistProduct({{ product.id }}, this)">
+          <i class="fa-regular fa-heart"></i>
+        </button>
+      </div>
+
+      <div class="flex items-baseline gap-2 mt-2">
+        <span class="text-2xl font-bold text-[#0c1a4b]" id="priceMain">₹{{ '%.0f'|format(product.sale_price or product.price) }}</span>
+        {% if product.sale_price %}
+        <span class="text-sm text-gray-400 line-through">₹{{ '%.0f'|format(product.price) }}</span>
+        <span class="text-sm font-bold text-green-600">{{ ((1 - (product.sale_price / product.price)) * 100) | round | int }}% off</span>
+        {% endif %}
+      </div>
+
+      <p class="text-sm text-gray-600 mt-3 leading-relaxed">{{ product.description or "No description provided." }}</p>
+
+      <div class="flex flex-wrap gap-2 mt-3">
+        {% for g in (product.gender or []) %}<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ g }}</span>{% endfor %}
+        {% for s in (product.shape or []) %}<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ s }}</span>{% endfor %}
+      </div>
+
+      <p class="text-sm mt-4 font-semibold {{ 'text-green-600' if product.stock > 0 else 'text-red-500' }}">
+        {% if product.stock > 0 %}<i class="fa-solid fa-check"></i> In stock ({{ product.stock }} available){% else %}<i class="fa-solid fa-xmark"></i> Out of stock{% endif %}
+      </p>
+
+      <div class="flex items-center gap-2 mt-4">
+        <span class="text-sm font-semibold">Qty</span>
+        <button class="cart-qty-btn" onclick="changeQty(-1)">−</button>
+        <span id="qtyDisplay" class="w-6 text-center">1</span>
+        <button class="cart-qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-6">
+        <button class="btn-secondary" onclick="window.addToCart({{ product.id }})" {{ 'disabled' if product.stock == 0 else '' }}>Add to Bag</button>
+        <button class="btn-primary" id="buyNowBtn" onclick="startBuyFlow()" {{ 'disabled' if product.stock == 0 else '' }}>Buy Now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2: Eye checkup question -->
+  <section id="step-checkup" class="step">
+    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('product')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+    <h2 class="text-xl font-bold text-[#0c1a4b] mb-1">Have you had your eye checkup?</h2>
+    <p class="text-sm text-gray-500 mb-6">We need your prescription to prepare the right lenses.</p>
+    <div class="grid grid-cols-2 gap-3">
+      <button class="btn-primary" onclick="checkupAnswer(true)">Yes</button>
+      <button class="btn-secondary" onclick="checkupAnswer(false)">No</button>
+    </div>
+
+    <div id="noCheckupPanel" class="hidden mt-6 bg-blue-50 border border-blue-100 rounded-xl p-5 text-center">
+      <i class="fa-solid fa-eye text-3xl text-[#0c1a4b] mb-3"></i>
+      <h3 class="font-bold text-[#0c1a4b] mb-1">Get a FREE eye checkup</h3>
+      <p class="text-sm text-gray-600 mb-4">Contact our store on WhatsApp to book a free eye checkup before you order.</p>
+      <button class="btn-primary" onclick="getFreeCheckup()">Get Free Eye Checkup</button>
+      <p class="text-xs text-gray-400 mt-3">You'll be taken to WhatsApp — just press Send.</p>
+    </div>
+  </section>
+
+  <!-- STEP 3: Prescription -->
+  <section id="step-prescription" class="step">
+    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('checkup')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+    <h2 class="text-xl font-bold text-[#0c1a4b] mb-1">Enter your prescription</h2>
+    <p class="text-sm text-gray-500 mb-4">From your latest eye checkup report.</p>
+
+    <label class="flex items-center gap-2 text-sm mb-4">
+      <input type="checkbox" id="dontKnowPower" onchange="toggleDontKnow()"/>
+      I don't know my exact power
+    </label>
+
+    <div id="rxFields">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="font-semibold text-sm text-[#0c1a4b] mb-2">Right Eye (OD)</p>
+          <div class="space-y-2">
+            <input class="rx-input" id="r_sph" placeholder="SPH (e.g. -2.00)"/>
+            <input class="rx-input" id="r_cyl" placeholder="CYL (e.g. -0.50)"/>
+            <input class="rx-input" id="r_axis" placeholder="AXIS (0-180)"/>
+          </div>
+        </div>
+        <div>
+          <p class="font-semibold text-sm text-[#0c1a4b] mb-2">Left Eye (OS)</p>
+          <div class="space-y-2">
+            <input class="rx-input" id="l_sph" placeholder="SPH (e.g. -2.00)"/>
+            <input class="rx-input" id="l_cyl" placeholder="CYL (e.g. -0.50)"/>
+            <input class="rx-input" id="l_axis" placeholder="AXIS (0-180)"/>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <input class="rx-input" id="pd_val" placeholder="PD (optional)"/>
+        <input class="rx-input" id="add_val" placeholder="ADD (optional)"/>
+      </div>
+      <textarea class="rx-input mt-4" id="rx_notes" rows="2" placeholder="Additional notes (optional)"></textarea>
+    </div>
+
+    <div id="dontKnowPanel" class="hidden mt-4 bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-gray-600">
+      No problem — we'll flag your order so our team can contact you on WhatsApp to collect your prescription safely. We won't guess your power for you.
+    </div>
+
+    <p id="rxError" class="text-sm text-red-500 mt-3 hidden"></p>
+    <button class="btn-primary mt-6" onclick="submitPrescription()">Continue to Order Summary</button>
+  </section>
+
+  <!-- STEP 4: Order Summary -->
+  <section id="step-summary" class="step">
+    <button class="text-sm text-gray-500 mb-4" onclick="goToStep('prescription')"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+    <h2 class="text-xl font-bold text-[#0c1a4b] mb-4">Order Summary</h2>
+
+    <div class="bg-white border rounded-xl p-4 flex gap-3 items-center mb-4">
+      <img src="{{ product.image or 'https://placehold.co/100' }}" class="w-16 h-16 rounded-lg object-cover" alt=""/>
+      <div>
+        <p class="font-semibold text-[#0c1a4b]">{{ product.name }}</p>
+        <p class="text-xs text-gray-500">SKU: {{ product.sku }}</p>
+        <p class="text-sm font-bold text-[#0c1a4b] mt-1" id="summaryPrice"></p>
+      </div>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4 mb-4" id="summaryCustomer">
+      <p class="text-xs font-bold text-gray-400 uppercase mb-1">Customer</p>
+      <p class="text-sm" id="summaryCustomerText">Not signed in</p>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4 mb-4" id="summaryRx"></div>
+
+    <div class="bg-white border rounded-xl p-4 mb-4 flex justify-between items-center">
+      <span class="text-sm font-semibold">Quantity</span>
+      <span id="summaryQty" class="text-sm font-bold"></span>
+    </div>
+
+    <div class="flex justify-between items-center text-lg font-bold text-[#0c1a4b] mb-6">
+      <span>Total</span><span id="summaryTotal"></span>
+    </div>
+
+    <p id="orderError" class="text-sm text-red-500 mb-3 hidden"></p>
+    <button class="btn-primary" id="sendOrderBtn" onclick="sendOrder()">
+      <i class="fa-brands fa-whatsapp mr-1"></i> Send Order on WhatsApp
+    </button>
+    <p class="text-xs text-gray-400 mt-3 text-center">We'll open WhatsApp with your order pre-filled — just press Send. We don't send it automatically.</p>
+  </section>
+</main>
+
+<script>window.STORE_CONFIG = { googleClientId: "{{ google_client_id }}", whatsappNumber: "{{ whatsapp_number }}" };</script>
+<script>
+/* ---- merged from static/js/app.js ---- */
+/* global window, document */
+(function () {
+  "use strict";
+
+  const CFG = window.STORE_CONFIG || {};
+  let currentUser = null;
+  let wishlistIds = new Set();
+
+  // -------------------------------------------------------------------
+  // Small fetch helper
+  // -------------------------------------------------------------------
+  async function api(path, opts) {
+    const res = await fetch(path, Object.assign({
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+    }, opts));
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* no body */ }
+    if (!res.ok) {
+      const err = new Error(data.error || "Request failed");
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
+
+  function rupee(n) {
+    return "₹" + Math.round(n).toLocaleString("en-IN");
+  }
+
+  function toast(msg) {
+    if (typeof window.showToast === "function") window.showToast(msg);
+  }
+
+  // -------------------------------------------------------------------
+  // Auth
+  // -------------------------------------------------------------------
+  window.handleGoogleCredential = async function (response) {
+    try {
+      const data = await api("/api/auth/google", {
+        method: "POST",
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      currentUser = data.user;
+      toast(`Welcome, ${currentUser.name || currentUser.email}!`);
+      renderAuthArea();
+      refreshWishlistState();
+      refreshCartBadge();
+      const redirect = sessionStorage.getItem("post_login_redirect");
+      if (redirect) {
+        sessionStorage.removeItem("post_login_redirect");
+        window.location.href = redirect;
+      }
+    } catch (e) {
+      toast("Google sign-in failed. Please try again.");
+    }
+  };
+
+  async function loadCurrentUser() {
+    try {
+      const data = await api("/api/auth/me");
+      currentUser = data.user;
+    } catch (e) {
+      currentUser = null;
+    }
+    renderAuthArea();
+  }
+
+  async function logout() {
+    await api("/api/auth/logout", { method: "POST" });
+    currentUser = null;
+    wishlistIds = new Set();
+    renderAuthArea();
+    updateWishlistBadge();
+    toast("Logged out");
+  }
+  window.logout = logout;
+
+  function renderAuthArea() {
+    const desktop = document.getElementById("desktopAuthArea");
+    const mobile = document.getElementById("mobileAuthArea");
+    if (!desktop && !mobile) return;
+
+    if (currentUser) {
+      const label = (currentUser.name || currentUser.email || "Account").split(" ")[0];
+      if (desktop) {
+        desktop.outerHTML = `<button id="desktopAuthArea" onclick="window.logout()" class="btn-press text-sm font-bold bg-[#0c1a4b] text-white px-4 py-2 rounded-lg hover:bg-[#132363] transition-colors flex items-center gap-2">
+          ${currentUser.profile_image ? `<img src="${currentUser.profile_image}" class="w-5 h-5 rounded-full" alt=""/>` : ""}
+          Hi, ${label} <i class="fa-solid fa-right-from-bracket text-xs"></i>
+        </button>`;
+      }
+      if (mobile) {
+        mobile.innerHTML = `<div class="flex items-center gap-2 mb-3">
+            ${currentUser.profile_image ? `<img src="${currentUser.profile_image}" class="w-8 h-8 rounded-full" alt=""/>` : ""}
+            <span class="font-semibold text-[#0c1a4b]">${currentUser.name || currentUser.email}</span>
+          </div>
+          <button onclick="window.logout()" class="btn-press w-full bg-gray-100 text-[#0c1a4b] font-bold py-3 rounded-lg">Logout</button>`;
+        if (currentUser.role === "admin") {
+          mobile.innerHTML += `<a href="/admin" class="btn-press block text-center mt-2 w-full bg-[#0c1a4b] text-white font-bold py-3 rounded-lg">Admin Dashboard</a>`;
+        }
+      }
+    } else {
+      if (desktop) {
+        desktop.outerHTML = `<a href="/login" id="desktopAuthArea" class="btn-press text-sm font-bold bg-[#0c1a4b] text-white px-4 py-2 rounded-lg hover:bg-[#132363] transition-colors">Login</a>`;
+      }
+      if (mobile) {
+        mobile.innerHTML = `<a href="/login" class="btn-press w-full bg-[#0c1a4b] text-white font-bold py-3 rounded-lg hover:bg-[#132363] transition-colors flex items-center justify-center">
+          <i class="fa-solid fa-user mr-2"></i>Login / Sign Up</a>`;
+      }
+    }
+  }
+
+  function requireLogin(redirectTarget) {
+    sessionStorage.setItem("post_login_redirect", redirectTarget || window.location.pathname);
+    window.location.href = "/login";
+  }
+  window.requireLogin = requireLogin;
+
+  // -------------------------------------------------------------------
+  // Product card rendering (shared by dynamic sections / search / filters)
+  // -------------------------------------------------------------------
+  function productCardHtml(p) {
+    const hasDiscount = p.sale_price && p.sale_price < p.price;
+    const wished = wishlistIds.has(p.id);
+    return `
+    <div class="pc-card">
+      <a href="/product/${p.id}" class="pc-image-wrap block">
+        ${hasDiscount ? `<span class="pc-discount-badge">${p.discount_pct}% OFF</span>` : ""}
+        <img src="${p.image || 'https://placehold.co/400x400?text=Eyewear'}" alt="${escapeHtml(p.name)}" loading="lazy"/>
+      </a>
+      <button class="pc-wishlist-btn ${wished ? "active" : ""}" aria-label="Toggle wishlist" onclick="window.toggleWishlistProduct(${p.id}, this)">
+        <i class="fa-${wished ? "solid" : "regular"} fa-heart text-sm"></i>
+      </button>
+      <div class="pc-body">
+        <span class="pc-brand">${escapeHtml(p.brand || "")}</span>
+        <a href="/product/${p.id}" class="pc-name">${escapeHtml(p.name)}</a>
+        <div class="pc-price-row">
+          <span class="pc-price">${rupee(p.effective_price)}</span>
+          ${hasDiscount ? `<span class="pc-price-strike">${rupee(p.price)}</span>` : ""}
+        </div>
+        ${p.in_stock
+          ? `<button class="pc-add-btn" onclick="window.addToCart(${p.id}, this)">Add to Bag</button>`
+          : `<span class="pc-stock-out">Out of stock</span>`}
+      </div>
+    </div>`;
+  }
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  // -------------------------------------------------------------------
+  // Dynamic homepage sections (CMS)
+  // -------------------------------------------------------------------
+  async function loadDynamicSections() {
+    const container = document.getElementById("dynamicSections");
+    if (!container) return;
+    try {
+      const data = await api("/api/sections");
+      container.innerHTML = data.sections.map((s) => `
+        <section class="py-4 px-4 io-reveal in-view">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-[#0c1a4b]">${escapeHtml(s.title)}</h3>
+              ${s.subtitle ? `<p class="text-sm text-gray-500">${escapeHtml(s.subtitle)}</p>` : ""}
+            </div>
+            ${s.button_text ? `<button class="text-sm font-semibold text-blue-600 btn-press" onclick="scrollToShop()">${escapeHtml(s.button_text)}</button>` : ""}
+          </div>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            ${s.products.length ? s.products.map(productCardHtml).join("") : `<p class="col-span-full text-center text-gray-400 py-6">No products in this section yet.</p>`}
+          </div>
+        </section>`).join("");
+    } catch (e) {
+      container.innerHTML = "";
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Hero slider — rebuilt from CMS data when the admin has added slides
+  // -------------------------------------------------------------------
+  async function loadHeroSlides() {
+    try {
+      const data = await api("/api/hero-slides");
+      if (!data.slides || data.slides.length === 0) return; // keep the built-in design
+      rebuildHero(data.slides);
+    } catch (e) { /* keep default hero */ }
+  }
+
+  function rebuildHero(slides) {
+    const section = document.getElementById("heroSlider");
+    if (!section) return;
+    const slidesHtml = slides.map((s, i) => `
+      <article class="hero-slide${i === 0 ? " active" : ""}" data-slide="${i}" data-tone="${s.tone || "dark"}">
+        <div class="hero-media-wrap">
+          ${s.video
+            ? `<video class="hero-media object-cover" data-slide-video muted loop playsinline preload="none"><source src="${s.video}" type="video/mp4"/></video>`
+            : `<img alt="${escapeHtml(s.heading)}" class="hero-media object-cover" src="${s.image || 'https://placehold.co/1600x800'}"/>`}
+        </div>
+        <div class="hero-scrim hero-scrim-amber"></div>
+        <div class="hero-content w-[85%] lg:w-1/2 items-start text-left">
+          <h2 class="hero-h text-2xl lg:text-5xl font-bold leading-tight mb-2 text-white">${escapeHtml(s.heading)}</h2>
+          ${s.subtitle ? `<p class="hero-p text-sm lg:text-lg text-white/80 font-medium mb-4">${escapeHtml(s.subtitle)}</p>` : ""}
+          ${s.button_text ? `<a href="${s.button_link || '#'}" class="hero-cta btn-press inline-flex w-fit items-center gap-2 bg-white text-[#0c1a4b] font-bold px-5 py-2.5 lg:px-6 lg:py-3 rounded-lg hover:bg-amber-50 transition-colors">${escapeHtml(s.button_text)} <i class="fa-solid fa-arrow-right"></i></a>` : ""}
+        </div>
+      </article>`).join("");
+
+    const dotsHtml = slides.map((s, i) => `
+      <div class="hero-dot h-1 bg-white flex-1 rounded-full ${i === 0 ? "opacity-100" : "opacity-40"}" data-slide="${i}" onclick="window.__heroSetSlide(${i})"><span class="hero-dot-fill"></span></div>`).join("");
+
+    section.innerHTML = `
+      ${slidesHtml}
+      <button class="hero-nav hero-nav-prev" onclick="window.__heroShift(-1)" aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+      <button class="hero-nav hero-nav-next" onclick="window.__heroShift(1)" aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+      <div class="absolute bottom-4 left-4 right-4 lg:left-8 lg:right-8 z-20 flex gap-2">${dotsHtml}</div>`;
+
+    let idx = 0, timer = null;
+    const nodes = () => section.querySelectorAll(".hero-slide");
+    const dots = () => section.querySelectorAll(".hero-dot");
+    function setSlide(i) {
+      const list = nodes();
+      idx = (i + list.length) % list.length;
+      list.forEach((el, n) => el.classList.toggle("active", n === idx));
+      dots().forEach((d, n) => { d.style.opacity = n === idx ? "1" : "0.4"; });
+    }
+    function restart() {
+      clearInterval(timer);
+      timer = setInterval(() => setSlide(idx + 1), 4000);
+    }
+    window.__heroSetSlide = (i) => { setSlide(i); restart(); };
+    window.__heroShift = (d) => { setSlide(idx + d); restart(); };
+    restart();
+  }
+
+  // -------------------------------------------------------------------
+  // Search
+  // -------------------------------------------------------------------
+  window.runSearch = async function () {
+    const input = document.getElementById("searchInput");
+    const val = (input && input.value || "").trim();
+    if (!val) { toast("Type something to search"); return; }
+    try {
+      const data = await api(`/api/products?search=${encodeURIComponent(val)}`);
+      showSearchResults(val, data.products);
+    } catch (e) {
+      toast("Search failed, please try again");
+    }
+  };
+
+  function showSearchResults(term, products) {
+    const overlay = document.getElementById("searchResultsOverlay");
+    const grid = document.getElementById("searchResultsGrid");
+    if (!overlay || !grid) return;
+    grid.innerHTML = products.length
+      ? products.map(productCardHtml).join("")
+      : `<p class="col-span-full text-center text-gray-500 py-10">No glasses found for "${escapeHtml(term)}".</p>`;
+    overlay.classList.remove("hidden");
+  }
+  window.closeSearchResults = function (e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById("searchResultsOverlay").classList.add("hidden");
+  };
+
+  // -------------------------------------------------------------------
+  // Live filtered results (gender / shape / style / price)
+  // -------------------------------------------------------------------
+  async function showLiveResults(title, params) {
+    const section = document.getElementById("liveResults");
+    const grid = document.getElementById("liveResultsGrid");
+    const empty = document.getElementById("liveResultsEmpty");
+    const heading = document.getElementById("liveResultsTitle");
+    if (!section) return;
+    heading.textContent = title;
+    section.classList.remove("hidden");
+    grid.innerHTML = `<div class="col-span-full"><div class="spinner"></div></div>`;
+    empty.classList.add("hidden");
+    try {
+      const qs = new URLSearchParams(params).toString();
+      const data = await api(`/api/products?${qs}`);
+      if (data.products.length === 0) {
+        grid.innerHTML = "";
+        empty.classList.remove("hidden");
+      } else {
+        grid.innerHTML = data.products.map(productCardHtml).join("");
+      }
+    } catch (e) {
+      grid.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">Something went wrong loading results.</p>`;
+    }
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  window.clearLiveResults = function () {
+    document.getElementById("liveResults").classList.add("hidden");
+  };
+
+  window.selectCategory = function (name, el) {
+    document.querySelectorAll("#shopping-for button").forEach((b) => b.querySelector("div").classList.remove("ring-2", "ring-blue-600"));
+    if (el) el.querySelector("div").classList.add("ring-2", "ring-blue-600");
+    showLiveResults(`Eyewear for ${name}`, { gender: name });
+  };
+
+  window.filterByPrice = function (band) {
+    const labels = { "under-750": "Under ₹750", "750-1500": "₹750 – ₹1,500", "1500-3000": "₹1,500 – ₹3,000", "3000-plus": "₹3,000+" };
+    showLiveResults(labels[band] || "Results", { price_band: band });
+  };
+
+  window.filterByShape = function (shape) {
+    showLiveResults(`${shape} Frames`, { shape });
+  };
+
+  window.filterByStyle = function (style) {
+    showLiveResults(`${style} Looks`, { style });
+  };
+
+  window.scrollToShop = function (gender) {
+    if (gender) { window.selectCategory(gender); return; }
+    const target = document.getElementById("dynamicSections") || document.getElementById("shop-by-price");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // -------------------------------------------------------------------
+  // Wishlist
+  // -------------------------------------------------------------------
+  async function refreshWishlistState() {
+    if (!currentUser) { wishlistIds = new Set(); updateWishlistBadge(); return; }
+    try {
+      const data = await api("/api/wishlist");
+      wishlistIds = new Set(data.items.map((i) => i.product.id));
+    } catch (e) { wishlistIds = new Set(); }
+    updateWishlistBadge();
+    document.dispatchEvent(new CustomEvent("wishlist:ready"));
+  }
+  window.isWishlisted = (id) => wishlistIds.has(id);
+
+  function updateWishlistBadge() {
+    const countEl = document.getElementById("wishlistCount");
+    if (!countEl) return;
+    if (wishlistIds.size > 0) {
+      countEl.textContent = wishlistIds.size;
+      countEl.classList.remove("hidden");
+      countEl.classList.add("flex");
+    } else {
+      countEl.classList.add("hidden");
+      countEl.classList.remove("flex");
+    }
+  }
+
+  window.toggleWishlistProduct = async function (productId, btnEl) {
+    if (!currentUser) { requireLogin(); return; }
+    try {
+      const data = await api("/api/wishlist/toggle", {
+        method: "POST", body: JSON.stringify({ product_id: productId }),
+      });
+      if (data.wishlisted) wishlistIds.add(productId); else wishlistIds.delete(productId);
+      updateWishlistBadge();
+      if (btnEl) {
+        const icon = btnEl.querySelector("i");
+        btnEl.classList.toggle("active", data.wishlisted);
+        icon.className = `fa-${data.wishlisted ? "solid" : "regular"} fa-heart text-sm`;
+      }
+      toast(data.wishlisted ? "Added to wishlist" : "Removed from wishlist");
+      if (document.getElementById("wishlistDrawer").classList.contains("open")) renderWishlistDrawer();
+    } catch (e) {
+      toast("Could not update wishlist");
+    }
+  };
+
+  window.openWishlistView = async function () {
+    if (!currentUser) { requireLogin(); return; }
+    await renderWishlistDrawer();
+    document.getElementById("wishlistDrawer").classList.add("open");
+    document.getElementById("wishlistOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+  };
+  window.closeWishlistView = function () {
+    document.getElementById("wishlistDrawer").classList.remove("open");
+    document.getElementById("wishlistOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  };
+
+  async function renderWishlistDrawer() {
+    const list = document.getElementById("wishlistItemsList");
+    try {
+      const data = await api("/api/wishlist");
+      list.innerHTML = data.items.length
+        ? data.items.map((i) => productCardHtml(i.product)).join("")
+        : `<p class="col-span-2 text-center text-gray-500 py-10">Your wishlist is empty.</p>`;
+    } catch (e) {
+      list.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-10">Could not load wishlist.</p>`;
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Cart
+  // -------------------------------------------------------------------
+  async function refreshCartBadge() {
+    try {
+      const data = await api("/api/cart");
+      const countEl = document.getElementById("bagCount");
+      const count = data.items.reduce((n, i) => n + i.quantity, 0);
+      if (count > 0) {
+        countEl.textContent = count;
+        countEl.classList.remove("hidden");
+        countEl.classList.add("flex");
+      } else {
+        countEl.classList.add("hidden");
+        countEl.classList.remove("flex");
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  window.addToCart = async function (productId, btnEl) {
+    try {
+      await api("/api/cart/add", { method: "POST", body: JSON.stringify({ product_id: productId, quantity: 1 }) });
+      toast("Item added to bag");
+      refreshCartBadge();
+      if (document.getElementById("cartDrawer").classList.contains("open")) renderCartDrawer();
+    } catch (e) {
+      toast(e.data && e.data.error ? e.data.error : "Could not add to bag");
+    }
+  };
+
+  window.openCart = async function () {
+    await renderCartDrawer();
+    document.getElementById("cartDrawer").classList.add("open");
+    document.getElementById("cartOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+  };
+  window.closeCart = function () {
+    document.getElementById("cartDrawer").classList.remove("open");
+    document.getElementById("cartOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  };
+
+  async function renderCartDrawer() {
+    const list = document.getElementById("cartItemsList");
+    const footer = document.getElementById("cartFooter");
+    try {
+      const data = await api("/api/cart");
+      if (data.items.length === 0) {
+        list.innerHTML = `<p class="text-center text-gray-500 py-10">Your bag is empty.</p>`;
+        footer.classList.add("hidden");
+        return;
+      }
+      list.innerHTML = data.items.map((i) => `
+        <div class="cart-line" data-item-id="${i.id}">
+          <img src="${i.product.image || 'https://placehold.co/100'}" alt=""/>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-[#0c1a4b] truncate">${escapeHtml(i.product.name)}</p>
+            <p class="text-xs text-gray-500">${rupee(i.product.effective_price)} each</p>
+            <div class="flex items-center gap-2 mt-1">
+              <button class="cart-qty-btn" onclick="window.updateCartQty(${i.id}, ${i.quantity - 1})">−</button>
+              <span class="text-sm w-5 text-center">${i.quantity}</span>
+              <button class="cart-qty-btn" onclick="window.updateCartQty(${i.id}, ${i.quantity + 1})">+</button>
+            </div>
+          </div>
+          <button class="text-gray-400 hover:text-red-500 px-1" onclick="window.removeCartItem(${i.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>`).join("");
+      document.getElementById("cartTotal").textContent = rupee(data.total);
+      footer.classList.remove("hidden");
+
+      const checkoutBtn = document.getElementById("cartCheckoutBtn");
+      const firstItem = data.items[0];
+      checkoutBtn.onclick = (e) => {
+        e.preventDefault();
+        if (!currentUser) { requireLogin(`/product/${firstItem.product.id}`); return; }
+        window.location.href = `/product/${firstItem.product.id}`;
+      };
+    } catch (e) {
+      list.innerHTML = `<p class="text-center text-gray-500 py-10">Could not load your bag.</p>`;
+    }
+  }
+
+  window.updateCartQty = async function (itemId, qty) {
+    try {
+      await api("/api/cart/update", { method: "POST", body: JSON.stringify({ item_id: itemId, quantity: qty }) });
+      renderCartDrawer();
+      refreshCartBadge();
+    } catch (e) { toast("Could not update quantity"); }
+  };
+  window.removeCartItem = async function (itemId) {
+    try {
+      await api("/api/cart/remove", { method: "POST", body: JSON.stringify({ item_id: itemId }) });
+      renderCartDrawer();
+      refreshCartBadge();
+    } catch (e) { toast("Could not remove item"); }
+  };
+
+  // -------------------------------------------------------------------
+  // WhatsApp support (footer "Chat With Us")
+  // -------------------------------------------------------------------
+  window.openWhatsAppSupport = function () {
+    const msg = encodeURIComponent("Hello, I have a question about your eyewear.");
+    window.open(`https://wa.me/${CFG.whatsappNumber}?text=${msg}`, "_blank");
+  };
+
+  // -------------------------------------------------------------------
+  // Footer CMS content
+  // -------------------------------------------------------------------
+  async function loadFooterConfig() {
+    try {
+      const data = await api("/api/site-config/footer");
+      const cfg = data.value;
+      if (!cfg || Object.keys(cfg).length === 0) return;
+      const aboutEl = document.getElementById("footerAboutLinks");
+      if (aboutEl && cfg.about_links) {
+        aboutEl.innerHTML = cfg.about_links.map((l) =>
+          `<a href="${l.url || '#'}" class="block hover:text-white transition-colors">${escapeHtml(l.label)}</a>`).join("");
+      }
+      const copyEl = document.getElementById("footerCopyright");
+      if (copyEl && cfg.copyright) copyEl.textContent = cfg.copyright;
+    } catch (e) { /* keep defaults */ }
+  }
+
+  // -------------------------------------------------------------------
+  // Init
+  // -------------------------------------------------------------------
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadCurrentUser();
+    refreshWishlistState();
+    refreshCartBadge();
+    loadDynamicSections();
+    loadHeroSlides();
+    loadFooterConfig();
+
+    if (window.google && window.google.accounts && CFG.googleClientId) {
+      // Header/menu use links to /login for the full-screen sign-in experience;
+      // this just keeps GSI's session state fresh if a One Tap prompt is desired later.
+    }
+  });
+})();
+
+</script>
+<script>
+  const PRODUCT_ID = {{ product.id }};
+  const PRODUCT_PRICE = {{ product.sale_price or product.price }};
+  let qty = 1;
+
+  document.addEventListener('wishlist:ready', () => {
+    const btn = document.getElementById('wishlistToggleBtn');
+    const icon = btn.querySelector('i');
+    const active = window.isWishlisted(PRODUCT_ID);
+    btn.classList.toggle('active', active);
+    icon.className = `fa-${active ? 'solid' : 'regular'} fa-heart`;
+  });
+  let hasCheckup = null;
+  let prescriptionData = { has_checkup: false };
+
+  function goToStep(name) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + name).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function changeQty(delta) {
+    qty = Math.max(1, qty + delta);
+    document.getElementById('qtyDisplay').textContent = qty;
+  }
+
+  function startBuyFlow() {
+    if (!window.__currentUserLoaded) {
+      // app.js loads the user async; give it a brief moment then re-check
+    }
+    fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => r.json()).then(data => {
+      if (!data.user) {
+        sessionStorage.setItem('post_login_redirect', window.location.pathname);
+        window.location.href = '/login';
+        return;
+      }
+      goToStep('checkup');
+    });
+  }
+
+  function checkupAnswer(yes) {
+    hasCheckup = yes;
+    document.getElementById('noCheckupPanel').classList.toggle('hidden', !!yes ? true : false);
+    if (yes) {
+      goToStep('prescription');
+    } else {
+      document.getElementById('noCheckupPanel').classList.remove('hidden');
+    }
+  }
+
+  async function getFreeCheckup() {
+    try {
+      const res = await fetch('/api/whatsapp/checkup-link');
+      const data = await res.json();
+      window.open(data.whatsapp_url, '_blank');
+    } catch (e) {
+      alert('Could not open WhatsApp right now, please try again.');
+    }
+  }
+
+  function toggleDontKnow() {
+    const dontKnow = document.getElementById('dontKnowPower').checked;
+    document.getElementById('rxFields').classList.toggle('hidden', dontKnow);
+    document.getElementById('dontKnowPanel').classList.toggle('hidden', !dontKnow);
+  }
+
+  function validNum(val, min, max) {
+    if (val === '' || val === null) return true;
+    const n = parseFloat(val);
+    return !isNaN(n) && n >= min && n <= max;
+  }
+
+  function submitPrescription() {
+    const errEl = document.getElementById('rxError');
+    errEl.classList.add('hidden');
+    const dontKnow = document.getElementById('dontKnowPower').checked;
+
+    if (dontKnow) {
+      prescriptionData = { has_checkup: true, right: {}, left: {}, notes: "Customer does not know exact power — please contact for prescription." };
+      goToStep('summary');
+      renderSummary();
+      return;
+    }
+
+    const r_sph = document.getElementById('r_sph').value.trim();
+    const r_cyl = document.getElementById('r_cyl').value.trim();
+    const r_axis = document.getElementById('r_axis').value.trim();
+    const l_sph = document.getElementById('l_sph').value.trim();
+    const l_cyl = document.getElementById('l_cyl').value.trim();
+    const l_axis = document.getElementById('l_axis').value.trim();
+    const pd = document.getElementById('pd_val').value.trim();
+    const add = document.getElementById('add_val').value.trim();
+    const notes = document.getElementById('rx_notes').value.trim();
+
+    if (![r_sph, l_sph].every(v => validNum(v, -20, 20)) || ![r_cyl, l_cyl].every(v => validNum(v, -20, 20))) {
+      errEl.textContent = 'SPH and CYL must be numbers between -20 and 20.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (![r_axis, l_axis].every(v => validNum(v, 0, 180))) {
+      errEl.textContent = 'AXIS must be a number between 0 and 180.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (!r_sph && !l_sph) {
+      errEl.textContent = 'Please enter at least the SPH values, or check "I don\'t know my exact power".';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    prescriptionData = {
+      has_checkup: true,
+      right: { sph: r_sph, cyl: r_cyl, axis: r_axis },
+      left: { sph: l_sph, cyl: l_cyl, axis: l_axis },
+    };
+    if (pd) prescriptionData.pd = pd;
+    if (add) prescriptionData.add = add;
+    if (notes) prescriptionData.notes = notes;
+
+    goToStep('summary');
+    renderSummary();
+  }
+
+  async function renderSummary() {
+    document.getElementById('summaryPrice').textContent = '₹' + PRODUCT_PRICE.toFixed(0);
+    document.getElementById('summaryQty').textContent = qty;
+    document.getElementById('summaryTotal').textContent = '₹' + (PRODUCT_PRICE * qty).toFixed(0);
+
+    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    const data = await res.json();
+    if (data.user) {
+      document.getElementById('summaryCustomerText').innerHTML =
+        `<span class="font-semibold">${data.user.name || ''}</span><br/><span class="text-gray-500">${data.user.email}</span>`;
+    }
+
+    const rxBox = document.getElementById('summaryRx');
+    if (!prescriptionData.has_checkup) {
+      rxBox.innerHTML = `<p class="text-xs font-bold text-gray-400 uppercase mb-1">Prescription</p><p class="text-sm text-gray-500">No prescription provided.</p>`;
+    } else if (prescriptionData.notes && !prescriptionData.right.sph) {
+      rxBox.innerHTML = `<p class="text-xs font-bold text-gray-400 uppercase mb-1">Prescription</p><p class="text-sm text-gray-500">${prescriptionData.notes}</p>`;
+    } else {
+      rxBox.innerHTML = `
+        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Prescription</p>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><p class="font-semibold mb-1">Right Eye</p>
+            <p>SPH: ${prescriptionData.right.sph || '-'}</p>
+            <p>CYL: ${prescriptionData.right.cyl || '-'}</p>
+            <p>AXIS: ${prescriptionData.right.axis || '-'}</p>
+          </div>
+          <div><p class="font-semibold mb-1">Left Eye</p>
+            <p>SPH: ${prescriptionData.left.sph || '-'}</p>
+            <p>CYL: ${prescriptionData.left.cyl || '-'}</p>
+            <p>AXIS: ${prescriptionData.left.axis || '-'}</p>
+          </div>
+        </div>
+        ${prescriptionData.pd ? `<p class="text-sm mt-2">PD: ${prescriptionData.pd}</p>` : ''}`;
+    }
+  }
+
+  async function sendOrder() {
+    const btn = document.getElementById('sendOrderBtn');
+    const errEl = document.getElementById('orderError');
+    errEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Placing order...';
+    try {
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ product_id: PRODUCT_ID, quantity: qty, prescription: prescriptionData }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not place order');
+      window.location.href = data.whatsapp_url;
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-brands fa-whatsapp mr-1"></i> Send Order on WhatsApp';
+    }
+  }
+</script>
+</body>
+</html>

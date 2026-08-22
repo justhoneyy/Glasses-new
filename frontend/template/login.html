@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Shop Eyeglasses</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+  body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg,#0c1a4b 0%,#132363 100%); }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center">
+    <a href="/" class="inline-flex items-center gap-2 mb-6 text-[#0c1a4b] font-bold text-lg">
+      <i class="fa-solid fa-glasses text-2xl"></i> Shop Eyeglasses
+    </a>
+    <h1 class="text-xl font-bold text-[#0c1a4b] mb-1">Welcome back</h1>
+    <p class="text-sm text-gray-500 mb-6">Sign in with Google to shop, track orders, and save your wishlist.</p>
+
+    <div id="g_id_signin" class="flex justify-center mb-4"></div>
+    <p id="loginStatus" class="text-sm text-red-500 hidden"></p>
+
+    <p class="text-xs text-gray-400 mt-6">We never ask for a password. Login is Google-only for your security.</p>
+    <a href="/" class="block mt-6 text-sm font-semibold text-blue-600">← Back to shopping</a>
+  </div>
+
+<script>
+  window.STORE_CONFIG = { googleClientId: "{{ google_client_id }}" };
+
+  async function handleGoogleCredential(response) {
+    const statusEl = document.getElementById('loginStatus');
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      const redirect = sessionStorage.getItem('post_login_redirect');
+      sessionStorage.removeItem('post_login_redirect');
+      window.location.href = data.user && data.user.role === 'admin' && !redirect ? '/admin' : (redirect || '/');
+    } catch (e) {
+      statusEl.textContent = 'Sign-in failed. Please try again.';
+      statusEl.classList.remove('hidden');
+    }
+  }
+
+  window.addEventListener('load', () => {
+    if (window.google && window.google.accounts) {
+      google.accounts.id.initialize({
+        client_id: window.STORE_CONFIG.googleClientId,
+        callback: handleGoogleCredential,
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin'),
+        { theme: 'filled_blue', size: 'large', shape: 'pill', width: 280 }
+      );
+    }
+  });
+</script>
+</body>
+</html>
