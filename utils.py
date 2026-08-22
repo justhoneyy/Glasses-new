@@ -53,9 +53,14 @@ def verify_google_id_token(token):
             token, google_requests.Request(), current_app.config["GOOGLE_CLIENT_ID"]
         )
         if claims.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+            current_app.logger.warning("Google token rejected: unexpected issuer %r", claims.get("iss"))
             return None
         return claims
     except Exception:
+        # Log the real reason (missing dependency, expired token, audience mismatch,
+        # network error reaching Google's cert endpoint, etc.) — without this, every
+        # failure looks identical to the client ("Invalid Google token").
+        current_app.logger.exception("Google ID token verification failed")
         return None
 
 
